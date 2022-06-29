@@ -77,6 +77,66 @@ function getDBClient(){
     }})
 }
 
+function getCurrentSample(coder, client){
+  client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';', (err, res) => {
+    if (err) throw err;
+  
+    if (res.rows.length < 1){
+      //send first sample by default
+      return {
+        sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
+        sample_number: 1
+            }
+    }
+    return {
+      sample_folder: res.rows[0]['sample_folder'],
+      sample_number: parseInt(res.rows[0]['sample_number'])
+          }
+
+  });
+}
+
+function getNextSample(coder, client){
+
+  const current = getCurrentSample(coder, client);
+
+  if (current['sample_number'] >= 87) {
+    return {sample_folder: 'done', sample_number: 0}
+  } else {
+
+    client.query('SELECT * from samples WHERE sample_number = \''+(current['sample_number'] + 1).toString()+'\';', (err, res) => {
+      if (err) throw err;
+    
+      if (res.rows.length < 1){
+        return {sample_folder: 'done', sample_number: 0}
+      }
+
+      return {
+        sample_folder: res.rows[0]['sample_folder'],
+        sample_number: parseInt(res.rows[0]['sample_number'])
+            }
+  
+    });
+
+  }
+
+}
+
+function updateCurrentSample(coder, client){
+  const next_sample = getNextSample(coder, client);
+
+  const update_query = "UPDATE current_sample SET sample_number = \'"+
+  next_sample['sample_number'].toString()+
+  "\', sample_folder =  \'"+
+  next_sample['sample_folder']+
+  "\' WHERE coder = \'"+coder+"\';"
+
+  client.query(update_query, (err, res) => {
+    if (err) throw err;
+  });
+  
+}
+
 app.get('/', function(req, response){
   const client = getDBClient();
   client.connect();
@@ -105,15 +165,49 @@ app.get('/current', function(req, response){
     if (err) throw err;
     
     // resp = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
-    response.send(res.rows[0]['sample_folder'])
+    if (res.rows.length < 1){
+      //send first sample by default
+      response.send('FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2')
+    } else {
+      response.send(res.rows[0]['sample_folder'])
+    }
     client.end();
   });
 
 });
 
-// app.post('/books-new', function(req, res){
+app.post('/store-response', function(req, response){
+  const client = getDBClient();
+  client.connect();
+
+  const coder = req.body['coder'].toLowerCase();
+  
+  const sample = req.body['sample'];
+  
+  let result = req.body['result'].toUpperCase();
+
+  result = result === 'A' || result === 'B' || result === 'C' ? result : 'C';
+
+  const result_table = coder+'_results';
+
+  const update_query = "UPDATE "+result_table+" SET result = \'"+result+"\' WHERE sample_folder = \'"+sample+"\';"
+
+  client.query(update_query, (err, res) => {
+    if (err) throw err;
+    
+    const current = getCurrentSample(coder, client)
+    if (sample == current){
+      updateCurrentSample(coder, client);
+      const new_current = getCurrentSample(coder, client);
+      response.send(new_current['sample_folder'])
+    } else {
+      response.send(current['sample_folder'])
+    }
+
+    client.end();
+  });
     
 
-// });
+});
 
 app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
