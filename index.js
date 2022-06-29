@@ -10,33 +10,46 @@
 //   .listen(PORT, () => console.log(`Listening on ${ PORT }`))
 
 
-  // const { Client } = require('pg');
+// const { Client } = require('pg');
 
-  // const client = new Client({
-  //   connectionString: process.env.DATABASE_URL,
-  //   ssl: {
-  //     rejectUnauthorized: false
-  //   }
-  // });
-  
-  // client.connect();
-  
-  // client.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
-  //   if (err) throw err;
-  //   for (let row of res.rows) {
-  //     console.log(JSON.stringify(row));
-  //   }
-  //   client.end();
-  // });
+// const client = new Client({
+//   connectionString: process.env.DATABASE_URL,
+//   ssl: {
+//     rejectUnauthorized: false
+//   }
+// });
+
+// client.connect();
+
+// client.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
+//   if (err) throw err;
+//   for (let row of res.rows) {
+//     console.log(JSON.stringify(row));
+//   }
+//   client.end();
+// });
 
   // const fs = require('fs');
 const express = require('express');
 const path = require('path');
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 
-body = `<!DOCTYPE html>
+const { Client } = require('pg');
+
+const client = new Client({
+  // connectionString: process.env.DATABASE_URL,
+  host:"localhost",
+  database: "test"
+  // ssl: {
+  //   rejectUnauthorized: false
+  // }
+});
+
+client.connect();
+
+let body = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -51,9 +64,28 @@ body = `<!DOCTYPE html>
     <h2 id='holder'></h2>
     <button type="button" id="next-button">Click here for next line</button>
   </body>
-</html>`
+</html>`;
 
 app.get('/', function(req, res){
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    // host:"localhost",
+    // database: "test"
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+  
+  client.connect();
+  
+  client.query('SELECT * from test_table;', (err, res) => {
+    if (err) throw err;
+    
+    body = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
+    client.end();
+  });
+
+
   res.send(body)
 });
 
