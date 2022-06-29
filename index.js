@@ -74,7 +74,7 @@ function getDBClient(){
     // database: "test"
     ssl: {
       rejectUnauthorized: false
-    })
+    }})
 }
 
 app.get('/', function(req, response){
