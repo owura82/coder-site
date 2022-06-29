@@ -1,6 +1,6 @@
 // const express = require('express')
 // const path = require('path')
-const PORT = process.env.PORT || 5000
+// const PORT = process.env.PORT || 5000
 
 // express()
 //   .use(express.static(path.join(__dirname, 'public')))
@@ -29,9 +29,10 @@ const PORT = process.env.PORT || 5000
   //   client.end();
   // });
 
+  // const fs = require('fs');
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
+const PORT = process.env.PORT || 5000
 
 const app = express();
 
@@ -52,15 +53,8 @@ body = `<!DOCTYPE html>
   </body>
 </html>`
 
-// your code goes here!
 app.get('/', function(req, res){
-    // res.send(body)
-    
-    const resp  = fs.readFileSync('temp.txt', 'utf-8');
-    console.log(typeof resp)
-
-    res.send(resp)
-
+  res.send(body)
 });
 
 // app.get('/books', function(req, res){
@@ -68,14 +62,9 @@ app.get('/', function(req, res){
 
 // });
 
-// app.get('/books-new', function(req, res){
-    
-// });
-
 // app.post('/books-new', function(req, res){
     
 
 // });
-
 
 app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
