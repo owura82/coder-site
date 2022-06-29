@@ -33,9 +33,12 @@
 const express = require('express');
 const path = require('path');
 const PORT = process.env.PORT || 5000;
+const cors = require('cors');
 
 const app = express();
+
 app.use(express.json())
+app.use(cors())
 
 const { Client } = require('pg');
 
@@ -134,7 +137,7 @@ function updateCurrentSample(coder, client){
   client.query(update_query, (err, res) => {
     if (err) throw err;
   });
-  
+
 }
 
 app.get('/', function(req, response){
