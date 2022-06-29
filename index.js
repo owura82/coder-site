@@ -35,6 +35,7 @@ const path = require('path');
 const PORT = process.env.PORT || 5000;
 
 const app = express();
+app.use(express.json())
 
 const { Client } = require('pg');
 
@@ -66,16 +67,18 @@ let body = `<!DOCTYPE html>
   </body>
 </html>`;
 
-app.get('/', function(req, response){
-  const client = new Client({
+function getDBClient(){
+  return new Client({
     connectionString: process.env.DATABASE_URL,
     // host:"localhost",
     // database: "test"
     ssl: {
       rejectUnauthorized: false
-    }
-  });
-  
+    })
+}
+
+app.get('/', function(req, response){
+  const client = getDBClient();
   client.connect();
   
   let resp = "temp";
@@ -92,10 +95,21 @@ app.get('/', function(req, response){
   // res.send(resp)
 });
 
-// app.get('/books', function(req, res){
+app.get('/current', function(req, response){
+  const client = getDBClient();
+  client.connect();
 
+  const coder = req.query['coder'].toLowerCase();
 
-// });
+  client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';', (err, res) => {
+    if (err) throw err;
+    
+    // resp = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
+    response.send(res.rows[0]['sample_folder'])
+    client.end();
+  });
+
+});
 
 // app.post('/books-new', function(req, res){
     
