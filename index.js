@@ -66,7 +66,7 @@ let body = `<!DOCTYPE html>
   </body>
 </html>`;
 
-app.get('/', function(req, res){
+app.get('/', function(req, response){
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
     // host:"localhost",
@@ -84,7 +84,7 @@ app.get('/', function(req, res){
     if (err) throw err;
     
     resp = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
-    res.send(resp)
+    response.send(resp)
     client.end();
   });
 
