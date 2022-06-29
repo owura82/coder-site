@@ -78,15 +78,17 @@ app.get('/', function(req, res){
   
   client.connect();
   
+  let resp = "temp";
+
   client.query('SELECT * from test_table;', (err, res) => {
     if (err) throw err;
     
-    body = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
+    resp = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
     client.end();
   });
 
 
-  res.send(body)
+  res.send(resp)
 });
 
 // app.get('/books', function(req, res){
