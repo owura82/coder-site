@@ -84,11 +84,12 @@ app.get('/', function(req, res){
     if (err) throw err;
     
     resp = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
+    res.send(resp)
     client.end();
   });
 
 
-  res.send(resp)
+  // res.send(resp)
 });
 
 // app.get('/books', function(req, res){
