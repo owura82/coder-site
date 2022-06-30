@@ -174,7 +174,7 @@ app.get('/current', function(req, response){
 
 });
 
-app.post('/store-response', function(req, response){
+app.post('/store-response', bodyParser.json(), function(req, response){
   const client = getDBClient();
   client.connect();
 
