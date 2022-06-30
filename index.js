@@ -1,35 +1,3 @@
-// const express = require('express')
-// const path = require('path')
-// const PORT = process.env.PORT || 5000
-
-// express()
-//   .use(express.static(path.join(__dirname, 'public')))
-//   .set('views', path.join(__dirname, 'views'))
-//   .set('view engine', 'ejs')
-//   .get('/', (req, res) => res.render('pages/index'))
-//   .listen(PORT, () => console.log(`Listening on ${ PORT }`))
-
-
-// const { Client } = require('pg');
-
-// const client = new Client({
-//   connectionString: process.env.DATABASE_URL,
-//   ssl: {
-//     rejectUnauthorized: false
-//   }
-// });
-
-// client.connect();
-
-// client.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
-//   if (err) throw err;
-//   for (let row of res.rows) {
-//     console.log(JSON.stringify(row));
-//   }
-//   client.end();
-// });
-
-  // const fs = require('fs');
 const express = require('express');
 const path = require('path');
 const PORT = process.env.PORT || 5000;
@@ -212,6 +180,8 @@ app.post('/store-response', function(req, response){
   const coder = req.body['coder'].toLowerCase();
   
   const sample = req.body['sample'];
+
+  const sample_number = parseInt(req.body['sample_number']);
   
   let result = req.body['result'].toUpperCase();
 
@@ -224,25 +194,64 @@ app.post('/store-response', function(req, response){
   console.log('update query -->', update_query);
 
 
-  client.query(update_query, (err, res) => {
-    if (err) throw err;
+  // client.query(update_query, (err, res) => {
+  //   if (err) throw err;
     
-    console.log('query response -->', res);
+  //   console.log('query response -->', res);
 
-    const current = getCurrentSample(coder);
+  //   const current = getCurrentSample(coder);
 
-    console.log('current is ---> ', current);
+  //   console.log('current is ---> ', current);
 
-    if (sample === current['sample_folder']){
-      updateCurrentSample(coder);
-      const new_current = getCurrentSample(coder);
-      response.send(new_current['sample_folder'])
+  //   if (sample === current['sample_folder']){
+  //     updateCurrentSample(coder);
+  //     const new_current = getCurrentSample(coder);
+  //     response.send(new_current['sample_folder'])
+  //   } else {
+  //     response.send(current['sample_folder'])
+  //   }
+
+  //   client.end();
+  // });
+
+  client.query(update_query)
+  .then((res) => {
+    //update current sample, first get next sample
+    if (sample_number >= 87) {
+      return {sample_folder: 'done', sample_number: 0};
     } else {
-      response.send(current['sample_folder'])
+      return client.query('SELECT * from samples WHERE sample_number = \''+(sample_number + 1).toString()+'\';');
     }
+  })
+  .then((res) => {
+    //result from get next sample should be here (either 'done' or an actual sample)
+    let update_query = '';
+    if (res['rows']){
+      //actual value
+     update_query = "UPDATE current_sample SET sample_number = \'"+
+      res['rows'][0]['sample_number']+
+      "\', sample_folder =  \'"+
+      res['rows'][0]['sample_folder']+
+      "\' WHERE coder = \'"+coder+"\';";
 
-    client.end();
-  });
+    } else {
+      //no next value
+      update_query = "UPDATE current_sample SET sample_number = '0', sample_folder = 'done' WHERE coder = \'"+coder+"\';";
+    }
+    return client.query(update_query);
+  })
+  .then((res) => {
+    //make query to get new current sample
+    return client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';');
+  })
+  .then((res) => {
+    response.send({
+      sample_folder: res.rows[0]['sample_folder'],
+      sample_number: res.rows[0]['sample_number']
+    })
+  })
+  .catch(err => err)
+  .then((res) => {client.end()});
     
 
 });
