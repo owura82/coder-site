@@ -204,9 +204,9 @@ app.post('/store-response', function(req, response){
     if (err) throw err;
     
     console.log('query response -->', res);
-    
+
     const current = getCurrentSample(coder, client)
-    if (sample == current){
+    if (sample === current['sample_folder']){
       updateCurrentSample(coder, client);
       const new_current = getCurrentSample(coder, client);
       response.send(new_current['sample_folder'])
