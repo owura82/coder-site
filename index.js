@@ -81,9 +81,14 @@ function getDBClient(){
 }
 
 function getCurrentSample(coder, client){
+  console.log('inside get current sample function');
+  console.log('SELECT * from current_sample WHERE coder = \''+coder+'\';');
+
   client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';', (err, res) => {
+    console.log('query response ---> ', res);
+    
     if (err) throw err;
-  
+    
     if (res.rows.length < 1){
       //send first sample by default
       return {
