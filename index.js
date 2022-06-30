@@ -80,22 +80,30 @@ function getDBClient(){
     }})
 }
 
-function getCurrentSample(coder, client){
+function getCurrentSample(coder){
   console.log('inside get current sample function');
   console.log('SELECT * from current_sample WHERE coder = \''+coder+'\';');
+
+  const client = getDBClient();
+  client.connect();
 
   client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';', (err, res) => {
     console.log('query response ---> ', res);
     
     if (err) throw err;
-    
+
     if (res.rows.length < 1){
+      client.end();
+
       //send first sample by default
       return {
         sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
         sample_number: 1
             }
     }
+
+    client.end();
+
     return {
       sample_folder: res.rows[0]['sample_folder'],
       sample_number: parseInt(res.rows[0]['sample_number'])
@@ -104,7 +112,9 @@ function getCurrentSample(coder, client){
   });
 }
 
-function getNextSample(coder, client){
+function getNextSample(coder){
+  const client = getDBClient();
+  client.connect();
 
   const current = getCurrentSample(coder, client);
 
@@ -116,9 +126,11 @@ function getNextSample(coder, client){
       if (err) throw err;
     
       if (res.rows.length < 1){
+        client.end();
         return {sample_folder: 'done', sample_number: 0}
       }
 
+      client.end();
       return {
         sample_folder: res.rows[0]['sample_folder'],
         sample_number: parseInt(res.rows[0]['sample_number'])
@@ -130,7 +142,10 @@ function getNextSample(coder, client){
 
 }
 
-function updateCurrentSample(coder, client){
+function updateCurrentSample(coder){
+  const client = getDBClient();
+  client.connect();
+
   const next_sample = getNextSample(coder, client);
 
   const update_query = "UPDATE current_sample SET sample_number = \'"+
@@ -141,6 +156,8 @@ function updateCurrentSample(coder, client){
 
   client.query(update_query, (err, res) => {
     if (err) throw err;
+    
+    client.end();
   });
 
 }
@@ -210,10 +227,10 @@ app.post('/store-response', function(req, response){
     
     console.log('query response -->', res);
 
-    const current = getCurrentSample(coder, client)
+    const current = getCurrentSample(coder)
     if (sample === current['sample_folder']){
-      updateCurrentSample(coder, client);
-      const new_current = getCurrentSample(coder, client);
+      updateCurrentSample(coder);
+      const new_current = getCurrentSample(coder);
       response.send(new_current['sample_folder'])
     } else {
       response.send(current['sample_folder'])
