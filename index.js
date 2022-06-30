@@ -217,6 +217,8 @@ app.post('/store-response', function(req, response){
   client.query(update_query)
   .then((res) => {
     //update current sample, first get next sample
+
+    console.log('first then, res --> ', res);
     if (sample_number >= 87) {
       return {sample_folder: 'done', sample_number: 0};
     } else {
@@ -225,6 +227,8 @@ app.post('/store-response', function(req, response){
   })
   .then((res) => {
     //result from get next sample should be here (either 'done' or an actual sample)
+
+    console.log('second then, res --> ', res);
     let update_query = '';
     if (res['rows']){
       //actual value
@@ -242,16 +246,22 @@ app.post('/store-response', function(req, response){
   })
   .then((res) => {
     //make query to get new current sample
+
+    console.log('third then, res --> ', res);
     return client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';');
   })
   .then((res) => {
+
+    console.log('fourth then (response), res --> ', res);
     response.send({
       sample_folder: res.rows[0]['sample_folder'],
       sample_number: res.rows[0]['sample_number']
     })
   })
-  .catch(err => err)
-  .then((res) => {client.end()});
+  .catch((err) => {throw err})
+  .then((res) => {
+    console.log('final then, res --> ', res);
+    client.end()});
     
 
 });
