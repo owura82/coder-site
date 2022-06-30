@@ -180,7 +180,7 @@ app.post('/store-response', function(req, response){
 
   const coder = req.body['coder'].toLowerCase();
   
-  const sample = req.body['sample'];
+  const sample = req.body['sample_folder'];
 
   const sample_number = parseInt(req.body['sample_number']);
   
@@ -277,7 +277,7 @@ app.post('/previous', function(req, response){
 
   const coder = req.body['coder'].toLowerCase();
   
-  const sample = req.body['sample'];
+  // const sample = req.body['sample_folder'];
 
   const sample_number = parseInt(req.body['sample_number']);
 
