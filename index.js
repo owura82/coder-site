@@ -2,15 +2,16 @@ const express = require('express');
 const path = require('path');
 const PORT = process.env.PORT || 5000;
 const cors = require('cors');
-const bodyParser = require('body-parser');
+// const bodyParser = require('body-parser');
 
 const app = express();
 
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.json())
+app.use(express.json());
 app.use(cors())
 
 const { Client } = require('pg');
+const exp = require('constants');
 
 // const client = new Client({
 //   // connectionString: process.env.DATABASE_URL,
@@ -174,7 +175,7 @@ app.get('/current', function(req, response){
 
 });
 
-app.post('/store-response', bodyParser.json(), function(req, response){
+app.post('/store-response', function(req, response){
   const client = getDBClient();
   client.connect();
 
