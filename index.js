@@ -84,16 +84,19 @@ function getCurrentSample(coder){
   console.log('inside get current sample function');
   console.log('SELECT * from current_sample WHERE coder = \''+coder+'\';');
 
-  const client = getDBClient();
-  client.connect();
+  const tclient = getDBClient();
+  tclient.connect();
 
-  client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';', (err, res) => {
-    console.log('query response ---> ', res);
+  tclient.query('SELECT * from current_sample WHERE coder = \''+coder+'\';', (err, res) => {
+    console.log('AAA query response ---> ', res);
     
-    if (err) throw err;
+    if (err){
+      console.log('error!!!!!!');
+      throw err;
+    }
 
     if (res.rows.length < 1){
-      client.end();
+      tclient.end();
 
       //send first sample by default
       return {
@@ -102,8 +105,7 @@ function getCurrentSample(coder){
             }
     }
 
-    client.end();
-
+    tclient.end();
     return {
       sample_folder: res.rows[0]['sample_folder'],
       sample_number: parseInt(res.rows[0]['sample_number'])
@@ -227,7 +229,10 @@ app.post('/store-response', function(req, response){
     
     console.log('query response -->', res);
 
-    const current = getCurrentSample(coder)
+    const current = getCurrentSample(coder);
+
+    console.log('current is ---> ', current);
+
     if (sample === current['sample_folder']){
       updateCurrentSample(coder);
       const new_current = getCurrentSample(coder);
