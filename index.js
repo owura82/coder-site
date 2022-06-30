@@ -183,8 +183,8 @@ app.post('/store-response', function(req, response){
   const client = getDBClient();
   client.connect();
 
-  console.log('request body', req.body);
-  
+  console.log('request body -->', req.body);
+
   const coder = req.body['coder'].toLowerCase();
   
   const sample = req.body['sample'];
@@ -197,8 +197,13 @@ app.post('/store-response', function(req, response){
 
   const update_query = "UPDATE "+result_table+" SET result = \'"+result+"\' WHERE sample_folder = \'"+sample+"\';"
 
+  console.log('update query -->', update_query);
+
+
   client.query(update_query, (err, res) => {
     if (err) throw err;
+    
+    console.log('query response -->', res);
     
     const current = getCurrentSample(coder, client)
     if (sample == current){
