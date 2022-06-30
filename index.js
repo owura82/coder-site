@@ -183,6 +183,8 @@ app.post('/store-response', function(req, response){
   const client = getDBClient();
   client.connect();
 
+  console.log('request body', req.body);
+  
   const coder = req.body['coder'].toLowerCase();
   
   const sample = req.body['sample'];
