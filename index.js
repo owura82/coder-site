@@ -13,34 +13,6 @@ app.use(cors())
 const { Client } = require('pg');
 const exp = require('constants');
 
-// const client = new Client({
-//   // connectionString: process.env.DATABASE_URL,
-//   host:"localhost",
-//   database: "test"
-//   // ssl: {
-//   //   rejectUnauthorized: false
-//   // }
-// });
-
-// client.connect();
-
-let body = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>HTML 5 Boilerplate</title>
-    <link rel="stylesheet" href="style.css">
-  </head>
-  <body>
-  <script src="index.js"></script>
-    <h1>Test heading here!!</h1>
-    <h2 id='holder'></h2>
-    <button type="button" id="next-button">Click here for next line</button>
-  </body>
-</html>`;
-
 function getDBClient(){
   return new Client({
     connectionString: process.env.DATABASE_URL,
@@ -51,103 +23,20 @@ function getDBClient(){
     }})
 }
 
-// function getCurrentSample(coder){
-//   console.log('inside get current sample function');
-//   console.log('SELECT * from current_sample WHERE coder = \''+coder+'\';');
-
-//   const tclient = getDBClient();
-//   tclient.connect();
-
-//   tclient.query('SELECT * from current_sample WHERE coder = \''+coder+'\';', (err, res) => {
-//     console.log('AAA query response ---> ', res);
-    
-//     if (err){
-//       console.log('error!!!!!!');
-//       throw err;
-//     }
-
-//     if (res.rows.length < 1){
-//       tclient.end();
-
-//       //send first sample by default
-//       return {
-//         sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
-//         sample_number: 1
-//             }
-//     }
-
-//     tclient.end();
-//     return {
-//       sample_folder: res.rows[0]['sample_folder'],
-//       sample_number: parseInt(res.rows[0]['sample_number'])
-//           }
-
-//   });
-// }
-
-// function getNextSample(coder){
-//   const client = getDBClient();
-//   client.connect();
-
-//   const current = getCurrentSample(coder, client);
-
-//   if (current['sample_number'] >= 87) {
-//     return {sample_folder: 'done', sample_number: 0}
-//   } else {
-
-//     client.query('SELECT * from samples WHERE sample_number = \''+(current['sample_number'] + 1).toString()+'\';', (err, res) => {
-//       if (err) throw err;
-    
-//       if (res.rows.length < 1){
-//         client.end();
-//         return {sample_folder: 'done', sample_number: 0}
-//       }
-
-//       client.end();
-//       return {
-//         sample_folder: res.rows[0]['sample_folder'],
-//         sample_number: parseInt(res.rows[0]['sample_number'])
-//             }
-  
-//     });
-
-//   }
-
-// }
-
-// function updateCurrentSample(coder){
-//   const client = getDBClient();
-//   client.connect();
-
-//   const next_sample = getNextSample(coder, client);
-
-//   const update_query = "UPDATE current_sample SET sample_number = \'"+
-//   next_sample['sample_number'].toString()+
-//   "\', sample_folder =  \'"+
-//   next_sample['sample_folder']+
-//   "\' WHERE coder = \'"+coder+"\';"
-
-//   client.query(update_query, (err, res) => {
-//     if (err) throw err;
-    
-//     client.end();
-//   });
-
-// }
-
 app.get('/', function(req, response){
-  const client = getDBClient();
-  client.connect();
+  // const client = getDBClient();
+  // client.connect();
   
-  let resp = "temp";
+  // let resp = "temp";
 
-  client.query('SELECT * from test_table;', (err, res) => {
-    if (err) throw err;
+  // client.query('SELECT * from test_table;', (err, res) => {
+  //   if (err) throw err;
     
-    resp = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
-    response.send(resp)
-    client.end();
-  });
+  //   resp = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
+  //   response.send(resp)
+  //   client.end();
+  // });
+  response.send("this is not a pipe");
 
 });
 
@@ -160,7 +49,6 @@ app.get('/current', function(req, response){
   client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';', (err, res) => {
     if (err) throw err;
     
-    // resp = res.rows[0]['sample'] + ' ' + res.rows[1]['sample'] + ' ' + res.rows[2]['sample'] + ' ';
     if (res.rows.length < 1){
       //send first sample by default
       response.send('FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2')
@@ -196,27 +84,6 @@ app.post('/store-response', function(req, response){
   const update_query = "UPDATE "+result_table+" SET result = \'"+result+"\' WHERE sample_folder = \'"+sample+"\';"
 
   console.log('update query -->', update_query);
-
-
-  // client.query(update_query, (err, res) => {
-  //   if (err) throw err;
-    
-  //   console.log('query response -->', res);
-
-  //   const current = getCurrentSample(coder);
-
-  //   console.log('current is ---> ', current);
-
-  //   if (sample === current['sample_folder']){
-  //     updateCurrentSample(coder);
-  //     const new_current = getCurrentSample(coder);
-  //     response.send(new_current['sample_folder'])
-  //   } else {
-  //     response.send(current['sample_folder'])
-  //   }
-
-  //   client.end();
-  // });
 
   client.query(update_query)
   .then((res) => {
