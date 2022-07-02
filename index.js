@@ -71,25 +71,65 @@ app.get('/get-sample', function(req, response){
   const client = getDBClient();
   client.connect();
 
+  const coder = req.query['coder'];
   const sample_number = req.query['num']; //not the best, but assume front end sends valid sample number
 
-  client.query('SELECT * from samples WHERE sample_number = \''+sample_number+'\';', (err, res) => {
-    if (err) throw err;
+  // client.query('SELECT * from samples WHERE sample_number = \''+sample_number+'\';', (err, res) => {
+  //   if (err) throw err;
     
+  //   if (res.rows.length < 1){
+  //     //send first sample by default
+  //     response.send({
+  //       sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
+  //       sample_number: '1'
+  //     })
+  //   } else {
+  //     response.send({
+  //       sample_folder: res.rows[0]['sample_folder'],
+  //       sample_number: res.rows[0]['sample_number']
+  //     })
+  //   }
+  //   client.end();
+  // });
+
+  client.query('SELECT * from samples WHERE sample_number = \''+sample_number+'\';')
+  .then((res) => {
+    let new_current = {};
     if (res.rows.length < 1){
       //send first sample by default
-      response.send({
+      new_current = {
         sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
         sample_number: '1'
-      })
+      }
     } else {
-      response.send({
+      new_current = {
         sample_folder: res.rows[0]['sample_folder'],
         sample_number: res.rows[0]['sample_number']
-      })
+      }
     }
-    client.end();
-  });
+    //update current sample to the sample that was retrieved
+    const update_query = "UPDATE current_sample SET sample_number = \'"+
+    new_current.sample_number +
+      "\', sample_folder =  \'"+
+      new_current.sample_folder +
+      "\' WHERE coder = \'"+coder+"\';";
+
+    return client.query(update_query);
+  })
+  .then((res) => {
+    //current_sample table has been updated --> make query to get new current sample 
+    return client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';');
+  })
+  .then((res) => {
+    //response should contain current sample --> send to client
+    response.send({
+      sample_folder: res.rows[0]['sample_folder'],
+      sample_number: res.rows[0]['sample_number']
+    });
+  })
+  .catch((err) => {throw err})
+  .then((res) => {
+    client.end()});
 
 });
 
