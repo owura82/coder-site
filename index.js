@@ -51,7 +51,10 @@ app.get('/current', function(req, response){
     
     if (res.rows.length < 1){
       //send first sample by default
-      response.send('FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2')
+      response.send({
+        sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
+        sample_number: '1'
+      })
     } else {
       response.send({
         sample_folder: res.rows[0]['sample_folder'],
@@ -62,6 +65,37 @@ app.get('/current', function(req, response){
   });
 
 });
+
+
+app.get('/get-sample', function(req, response){
+  const client = getDBClient();
+  client.connect();
+
+  const sample_number = req.query['num']; //not the best, but assume front end sends valid sample number
+
+  client.query('SELECT * from samples WHERE sample_number = \''+sample_number+'\';', (err, res) => {
+    if (err) throw err;
+    
+    if (res.rows.length < 1){
+      //send first sample by default
+      response.send({
+        sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
+        sample_number: '1'
+      })
+    } else {
+      response.send({
+        sample_folder: res.rows[0]['sample_folder'],
+        sample_number: res.rows[0]['sample_number']
+      })
+    }
+    client.end();
+  });
+
+});
+
+
+
+
 
 app.post('/store-response', function(req, response){
   const client = getDBClient();
