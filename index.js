@@ -23,6 +23,35 @@ function getDBClient(){
     }})
 }
 
+function getNextSampleFromResults(results, sample_number){
+  //given the current sample_number, we want to return the smallest sample number greater than sample_number
+  //if this does not exist, return the smallest sample number less than sample_number
+  //it is guaranteeed that results is non empty and sample_number is not in results
+
+  let left = 100;
+  let right = 100;
+  let res_store = {};
+
+  for (let i = 0; i < results.length; i++) {
+    const num = parseInt(results[i]['sample_number']);
+    if (num < sample_number){
+      left = num < left ? num:left;
+    } else {
+      right = num < right ? num:right;
+    }
+    res_store[num] = results[i]['sample_folder']
+  }
+
+  const retNum = right < 100 ? right : left;
+  const retFolder = res_store[retNum];
+
+  return {
+    sample_number: retNum,
+    sample_folder: retFolder
+  }
+
+}
+
 app.get('/', function(req, response){
   // const client = getDBClient();
   // client.connect();
@@ -53,12 +82,14 @@ app.get('/current', function(req, response){
       //send first sample by default
       response.send({
         sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
-        sample_number: '1'
+        sample_number: '1',
+        all_done: 'no'
       })
     } else {
       response.send({
         sample_folder: res.rows[0]['sample_folder'],
-        sample_number: res.rows[0]['sample_number']
+        sample_number: res.rows[0]['sample_number'],
+        all_done: res.rows[0]['all_done']
       })
     }
     client.end();
@@ -73,24 +104,6 @@ app.get('/get-sample', function(req, response){
 
   const coder = req.query['coder'];
   const sample_number = req.query['num']; //not the best, but assume front end sends valid sample number
-
-  // client.query('SELECT * from samples WHERE sample_number = \''+sample_number+'\';', (err, res) => {
-  //   if (err) throw err;
-    
-  //   if (res.rows.length < 1){
-  //     //send first sample by default
-  //     response.send({
-  //       sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
-  //       sample_number: '1'
-  //     })
-  //   } else {
-  //     response.send({
-  //       sample_folder: res.rows[0]['sample_folder'],
-  //       sample_number: res.rows[0]['sample_number']
-  //     })
-  //   }
-  //   client.end();
-  // });
 
   client.query('SELECT * from samples WHERE sample_number = \''+sample_number+'\';')
   .then((res) => {
@@ -124,7 +137,8 @@ app.get('/get-sample', function(req, response){
     //response should contain current sample --> send to client
     response.send({
       sample_folder: res.rows[0]['sample_folder'],
-      sample_number: res.rows[0]['sample_number']
+      sample_number: res.rows[0]['sample_number'],
+      all_done: res.rows[0]['all_done']
     });
   })
   .catch((err) => {throw err})
@@ -132,10 +146,6 @@ app.get('/get-sample', function(req, response){
     client.end()});
 
 });
-
-
-
-
 
 app.post('/store-response', function(req, response){
   const client = getDBClient();
@@ -164,28 +174,34 @@ app.post('/store-response', function(req, response){
     //update current sample, first get next sample
 
     console.log('first then, res --> ', res);
-    if (sample_number >= 87) {
-      return {sample_folder: 'done', sample_number: 0};
-    } else {
-      return client.query('SELECT * from samples WHERE sample_number = \''+(sample_number + 1).toString()+'\';');
-    }
+    // if (sample_number >= 87) {
+    //   return {sample_folder: 'done', sample_number: 0};
+    // } else {
+    //   return client.query('SELECT * from samples WHERE sample_number = \''+(sample_number + 1).toString()+'\';');
+    // }
+
+    return client.query('SELECT * from '+result_table+' where result = \'X\';');
   })
   .then((res) => {
-    //result from get next sample should be here (either 'done' or an actual sample)
+    //res should contain all samples not yet addressed by coder
+    //update current sample with the next sample
 
     console.log('second then, res --> ', res);
     let update_query = '';
-    if (res['rows']){
-      //actual value
+    if (res['rows'].length > 0){
+      
+      const next = getNextSampleFromResults(res.rows, sample_number);
+
      update_query = "UPDATE current_sample SET sample_number = \'"+
-      res['rows'][0]['sample_number']+
+      next['sample_number']+
       "\', sample_folder =  \'"+
-      res['rows'][0]['sample_folder']+
+      next['sample_folder']+
       "\' WHERE coder = \'"+coder+"\';";
 
     } else {
-      //no next value
-      update_query = "UPDATE current_sample SET sample_number = '0', sample_folder = 'done' WHERE coder = \'"+coder+"\';";
+      //no next value --> update all_done field in current_sample table
+      update_query = `UPDATE current_sample SET sample_number = '1', sample_folder = 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
+                      all_done = 'yes' WHERE coder = '` +coder+"\';";
     }
     return client.query(update_query);
   })
@@ -200,7 +216,8 @@ app.post('/store-response', function(req, response){
     console.log('fourth then (response), res --> ', res);
     response.send({
       sample_folder: res.rows[0]['sample_folder'],
-      sample_number: res.rows[0]['sample_number']
+      sample_number: res.rows[0]['sample_number'],
+      all_done: res.rows[0]['all_done']
     });
   })
   .catch((err) => {throw err})
@@ -249,7 +266,8 @@ app.post('/previous', function(req, response){
     //response should contain current sample --> send to client
     response.send({
       sample_folder: res.rows[0]['sample_folder'],
-      sample_number: res.rows[0]['sample_number']
+      sample_number: res.rows[0]['sample_number'],
+      all_done: res.rows[0]['all_done']
     });
   })
   .catch((err) => {throw err})
