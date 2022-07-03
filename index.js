@@ -8,7 +8,7 @@ const app = express();
 
 // app.use(bodyParser.json())
 app.use(express.json());
-app.use(cors())
+app.use(cors());
 
 const { Client } = require('pg');
 const exp = require('constants');
@@ -174,23 +174,34 @@ app.post('/store-response', function(req, response){
     //update current sample, first get next sample
 
     console.log('first then, res --> ', res);
-    // if (sample_number >= 87) {
-    //   return {sample_folder: 'done', sample_number: 0};
-    // } else {
-    //   return client.query('SELECT * from samples WHERE sample_number = \''+(sample_number + 1).toString()+'\';');
-    // }
+    if (sample_number === 86 ) {
+      return client.query('SELECT * from '+result_table+' where result = \'X\' OR sample_number = \'87\';');
+    } 
 
-    return client.query('SELECT * from '+result_table+' where result = \'X\';');
+    return client.query('SELECT * from '+result_table+' where result = \'X\' OR sample_number = \''+((sample_number+1)%87).toString()+'\';');
   })
   .then((res) => {
     //res should contain all samples not yet addressed by coder
     //update current sample with the next sample
 
     console.log('second then, res --> ', res);
+    let temp_arr = []
+
+    //loop below removes 'sample_number + 1' from results if it has already been addressed by the coder
+    for (let i=0; i<res.rows.length; i++){
+      if(res.rows[i].sample_number !== (sample_number+1).toString()){
+        temp_arr.push(res.rows[i])
+      } else {
+        if (res.rows[i].result === 'X'){
+          temp_arr.push(res.rows[i])
+        }
+      }
+    }
+
     let update_query = '';
-    if (res['rows'].length > 0){
+    if (temp_arr.length > 0){
       
-      const next = getNextSampleFromResults(res.rows, sample_number);
+      const next = getNextSampleFromResults(temp_arr, sample_number);
 
      update_query = "UPDATE current_sample SET sample_number = \'"+
       next['sample_number']+
@@ -199,9 +210,16 @@ app.post('/store-response', function(req, response){
       "\' WHERE coder = \'"+coder+"\';";
 
     } else {
-      //no next value --> update all_done field in current_sample table
-      update_query = `UPDATE current_sample SET sample_number = '1', sample_folder = 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
-                      all_done = 'yes' WHERE coder = '` +coder+"\';";
+      //no next unadressed value, only one element in res.rows --> update all_done field in current_sample table and set current to the next successive value
+      
+      // update_query = `UPDATE current_sample SET sample_number = '1', sample_folder = 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
+      //                 all_done = 'yes' WHERE coder = '` +coder+"\';";
+
+      update_query = "UPDATE current_sample SET sample_number = \'"+
+      res.rows[0]['sample_number']+
+      "\', sample_folder =  \'"+
+      res.rows[0]['sample_folder']+
+      "\', all_done = 'yes' WHERE coder = \'"+coder+"\';";
     }
     return client.query(update_query);
   })
