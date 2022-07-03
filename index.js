@@ -39,15 +39,17 @@ function getNextSampleFromResults(results, sample_number){
     } else {
       right = num < right ? num:right;
     }
-    res_store[num] = results[i]['sample_folder']
+    res_store[num] = results[i];
   }
 
   const retNum = right < 100 ? right : left;
-  const retFolder = res_store[retNum];
+  const retFolder = res_store[retNum]['sample_folder'];
+  const order = res_store[retNum]['top_order'];
 
   return {
     sample_number: retNum,
-    sample_folder: retFolder
+    sample_folder: retFolder,
+    top_order: order
   }
 
 }
@@ -89,7 +91,8 @@ app.get('/current', function(req, response){
       response.send({
         sample_folder: res.rows[0]['sample_folder'],
         sample_number: res.rows[0]['sample_number'],
-        all_done: res.rows[0]['all_done']
+        all_done: res.rows[0]['all_done'],
+        top_order: res.rows[0]['top_order']
       })
     }
     client.end();
@@ -112,12 +115,14 @@ app.get('/get-sample', function(req, response){
       //send first sample by default
       new_current = {
         sample_folder: 'FFmpeg-FFmpeg-commit-02f909dc24b1f05cfbba75077c7707b905e63cd2',
-        sample_number: '1'
+        sample_number: '1',
+        top_order: 'N'
       }
     } else {
       new_current = {
         sample_folder: res.rows[0]['sample_folder'],
-        sample_number: res.rows[0]['sample_number']
+        sample_number: res.rows[0]['sample_number'],
+        top_order: res.rows[0]['top_order']
       }
     }
     //update current sample to the sample that was retrieved
@@ -125,6 +130,8 @@ app.get('/get-sample', function(req, response){
     new_current.sample_number +
       "\', sample_folder =  \'"+
       new_current.sample_folder +
+      "\', top_order = \'"+
+      new_current.top_order +
       "\' WHERE coder = \'"+coder+"\';";
 
     return client.query(update_query);
@@ -138,7 +145,8 @@ app.get('/get-sample', function(req, response){
     response.send({
       sample_folder: res.rows[0]['sample_folder'],
       sample_number: res.rows[0]['sample_number'],
-      all_done: res.rows[0]['all_done']
+      all_done: res.rows[0]['all_done'],
+      top_order: res.rows[0]['top_order']
     });
   })
   .catch((err) => {throw err})
@@ -207,6 +215,8 @@ app.post('/store-response', function(req, response){
       next['sample_number']+
       "\', sample_folder =  \'"+
       next['sample_folder']+
+      "\', top_order = \'"+
+      next['top_order']+
       "\' WHERE coder = \'"+coder+"\';";
 
     } else {
@@ -219,6 +229,8 @@ app.post('/store-response', function(req, response){
       res.rows[0]['sample_number']+
       "\', sample_folder =  \'"+
       res.rows[0]['sample_folder']+
+      "\', top_order = \'"+
+      res.rows[0]['top_order']+
       "\', all_done = 'yes' WHERE coder = \'"+coder+"\';";
     }
     return client.query(update_query);
@@ -235,7 +247,8 @@ app.post('/store-response', function(req, response){
     response.send({
       sample_folder: res.rows[0]['sample_folder'],
       sample_number: res.rows[0]['sample_number'],
-      all_done: res.rows[0]['all_done']
+      all_done: res.rows[0]['all_done'],
+      top_order: res.rows[0]['top_order']
     });
   })
   .catch((err) => {throw err})
@@ -272,6 +285,8 @@ app.post('/previous', function(req, response){
       res['rows'][0]['sample_number']+
       "\', sample_folder =  \'"+
       res['rows'][0]['sample_folder']+
+      "\', top_order = \'"+
+      res.rows[0]['top_order']+
       "\' WHERE coder = \'"+coder+"\';";
 
     return client.query(update_query);
@@ -285,7 +300,8 @@ app.post('/previous', function(req, response){
     response.send({
       sample_folder: res.rows[0]['sample_folder'],
       sample_number: res.rows[0]['sample_number'],
-      all_done: res.rows[0]['all_done']
+      all_done: res.rows[0]['all_done'],
+      top_order: res.rows[0]['top_order']
     });
   })
   .catch((err) => {throw err})
