@@ -197,7 +197,7 @@ app.post('/store-response', function(req, response){
 
     //loop below removes 'sample_number + 1' from results if it has already been addressed by the coder
     for (let i=0; i<res.rows.length; i++){
-      if(res.rows[i].sample_number !== (sample_number+1).toString()){
+      if(res.rows[i].sample_number !== ((sample_number+1) % 87).toString()){
         temp_arr.push(res.rows[i])
       } else {
         if (res.rows[i].result === 'X'){
