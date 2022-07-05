@@ -268,8 +268,7 @@ app.post('/previous', function(req, response){
   console.log('request body -->', req.body);
 
   const coder = req.body['coder'].toLowerCase();
-  
-  // const sample = req.body['sample_folder'];
+
 
   const sample_number = parseInt(req.body['sample_number']);
 
@@ -312,7 +311,7 @@ app.post('/previous', function(req, response){
 
 });
 
-app.get('/next', function(req, res){
+app.post('/next', function(req, res){
   //this endpoint is only accessible when all samples have been completed by coder 
   //gets the next sample and updates the coders current sample
 
@@ -322,8 +321,6 @@ app.get('/next', function(req, res){
   console.log('request body -->', req.body);
 
   const coder = req.body['coder'].toLowerCase();
-  
-  // const sample = req.body['sample_folder'];
 
   const sample_number = parseInt(req.body['sample_number']);
   let next;
