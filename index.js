@@ -311,4 +311,59 @@ app.post('/previous', function(req, response){
     
 
 });
+
+app.get('/next', function(req, res){
+  //this endpoint is only accessible when all samples have been completed by coder 
+  //gets the next sample and updates the coders current sample
+
+  const client = getDBClient();
+  client.connect();
+
+  console.log('request body -->', req.body);
+
+  const coder = req.body['coder'].toLowerCase();
+  
+  // const sample = req.body['sample_folder'];
+
+  const sample_number = parseInt(req.body['sample_number']);
+  let next;
+
+  if (sample_number < 1 || sample_number >= 87){
+    next = '1';
+  } else {
+    next = (sample_number + 1).toString();
+  }  
+
+  client.query('SELECT * from samples WHERE sample_number = \''+next+'\';')
+  .then((res) => {
+    //result from selecting previou sample should be here --> use to update current sample
+    const update_query = "UPDATE current_sample SET sample_number = \'"+
+      res['rows'][0]['sample_number']+
+      "\', sample_folder =  \'"+
+      res['rows'][0]['sample_folder']+
+      "\', top_order = \'"+
+      res.rows[0]['top_order']+
+      "\' WHERE coder = \'"+coder+"\';";
+
+    return client.query(update_query);
+  })
+  .then((res) => {
+    //current_sample table has been updated --> make query to get new current sample 
+    return client.query('SELECT * from current_sample WHERE coder = \''+coder+'\';');
+  })
+  .then((res) => {
+    //response should contain current sample --> send to client
+    response.send({
+      sample_folder: res.rows[0]['sample_folder'],
+      sample_number: res.rows[0]['sample_number'],
+      all_done: res.rows[0]['all_done'],
+      top_order: res.rows[0]['top_order']
+    });
+  })
+  .catch((err) => {throw err})
+  .then((res) => {
+    console.log('final then, res --> ', res);
+    client.end()});
+
+})
 app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
