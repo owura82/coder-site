@@ -311,7 +311,7 @@ app.post('/previous', function(req, response){
 
 });
 
-app.post('/next', function(req, res){
+app.post('/next', function(req, response){
   //this endpoint is only accessible when all samples have been completed by coder 
   //gets the next sample and updates the coders current sample
 
